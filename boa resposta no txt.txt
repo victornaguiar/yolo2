@@ -1,0 +1,1116 @@
+Looking at your notebook, I can see it's a computer vision project focused on object tracking using YOLO and various tracking algorithms. Let me restructure this into a clean, organized repository.
+
+Here's the proposed architecture:
+
+````
+soccer-tracking-pipeline/
+├── README.md
+├── requirements.txt
+├── setup.py
+├── .gitignore
+├── config/
+│   ├── __init__.py
+│   ├── paths.py
+│   └── tracking_config.py
+├── src/
+│   ├── __init__.py
+│   ├── data/
+│   │   ├── __init__.py
+│   │   ├── data_loader.py
+│   │   └── video_generator.py
+│   ├── tracking/
+│   │   ├── __init__.py
+│   │   ├── base_tracker.py
+│   │   ├── yolo_tracker.py
+│   │   └── botsort_tracker.py
+│   ├── evaluation/
+│   │   ├── __init__.py
+│   │   ├── metrics.py
+│   │   └── mot_evaluator.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── file_utils.py
+│       └── visualization.py
+├── notebooks/
+│   ├── 01_setup_environment.ipynb
+│   ├── 02_simple_tracking_demo.ipynb
+│   ├── 03_soccer_tracking_pipeline.ipynb
+│   └── 04_evaluation_analysis.ipynb
+├── scripts/
+│   ├── setup_colab.sh
+│   ├── download_models.py
+│   ├── run_tracking.py
+│   └── evaluate_results.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_data_loader.py
+│   ├── test_trackers.py
+│   └── test_evaluation.py
+└── data/
+    ├── sample_videos/
+    ├── detections/
+    ├── sequences/
+    └── tracking_results/
+````
+
+Now let me create the key files:
+
+````python
+# Soccer Tracking Pipeline
+
+A comprehensive computer vision pipeline for tracking soccer players using YOLOv8 and various tracking algorithms (BotSort, DeepSort).
+
+## Features
+
+- **Multi-Object Tracking**: Track multiple players across video frames
+- **Multiple Tracking Algorithms**: Support for BotSort and built-in YOLO tracking
+- **Evaluation Framework**: MOT (Multi-Object Tracking) metrics evaluation
+- **Google Colab Support**: Optimized for running in Google Colab environment
+- **Flexible Data Loading**: Support for MOT format datasets
+
+## Installation
+
+### Local Installation
+```bash
+git clone https://github.com/yourusername/soccer-tracking-pipeline.git
+cd soccer-tracking-pipeline
+pip install -r requirements.txt
+```
+
+### Google Colab Setup
+```python
+!git clone https://github.com/yourusername/soccer-tracking-pipeline.git
+%cd soccer-tracking-pipeline
+!pip install -r requirements.txt
+```
+
+## Quick Start
+
+### 1. Simple Tracking Demo
+```python
+from src.tracking import YOLOTracker
+
+# Initialize tracker
+tracker = YOLOTracker(model_name='yolov8n.pt')
+
+# Run tracking on video
+results = tracker.track_video('path/to/video.mp4', output_path='tracked_video.mp4')
+```
+
+### 2. Soccer Dataset Tracking
+```python
+from src.tracking import BotSortTracker
+from src.data import MOTDataLoader
+
+# Load soccer dataset
+data_loader = MOTDataLoader(dataset_path='/path/to/dataset')
+
+# Initialize BotSort tracker
+tracker = BotSortTracker()
+
+# Process all sequences
+tracker.process_dataset(data_loader, output_dir='tracking_results')
+```
+
+### 3. Evaluation
+```python
+from src.evaluation import MOTEvaluator
+
+# Evaluate tracking results
+evaluator = MOTEvaluator()
+metrics = evaluator.evaluate(
+    gt_dir='data/detections',
+    results_dir='data/tracking_results'
+)
+```
+
+## Project Structure
+
+- `src/`: Core implementation modules
+- `notebooks/`: Jupyter notebooks for different use cases
+- `scripts/`: Standalone scripts for common tasks
+- `config/`: Configuration files
+- `tests/`: Unit tests
+- `data/`: Sample data and results
+
+## Notebooks
+
+1. **01_setup_environment.ipynb**: Environment setup and dependency installation
+2. **02_simple_tracking_demo.ipynb**: Basic tracking demonstration
+3. **03_soccer_tracking_pipeline.ipynb**: Full soccer tracking pipeline
+4. **04_evaluation_analysis.ipynb**: Results evaluation and visualization
+
+## Configuration
+
+Edit `config/paths.py` to set your data paths:
+```python
+DATASET_PATH = "/path/to/your/dataset"
+RESULTS_DIR = "/path/to/save/results"
+```
+
+## Dependencies
+
+- Python 3.8+
+- PyTorch
+- Ultralytics (YOLOv8)
+- BoxMOT
+- OpenCV
+- NumPy
+- TrackEval
+
+## License
+
+MIT License
+
+## Citation
+
+If you use this code in your research, please cite:
+```bibtex
+@software{soccer_tracking_pipeline,
+  author = {Your Name},
+  title = {Soccer Tracking Pipeline},
+  year = {2024},
+  url = {https://github.com/yourusername/soccer-tracking-pipeline}
+}
+```
+````
+
+````python
+# Core dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+scipy>=1.10.0
+opencv-python>=4.7.0
+
+# Object detection and tracking
+ultralytics>=8.0.0
+boxmot>=10.0.0
+
+# Evaluation
+git+https://github.com/JonathonLuiten/TrackEval.git
+
+# Utilities
+tqdm>=4.65.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+pyyaml>=6.0
+
+# Development
+pytest>=7.3.0
+black>=23.0.0
+flake8>=6.0.0
+````
+
+````python
+"""Path configuration for the soccer tracking pipeline."""
+
+import os
+from pathlib import Path
+
+# Base directories
+PROJECT_ROOT = Path(__file__).parent.parent
+DATA_DIR = PROJECT_ROOT / "data"
+
+# Google Drive paths (for Colab)
+GDRIVE_PATH = "/content/drive/MyDrive"
+GDRIVE_DATASET_PATH = os.path.join(GDRIVE_PATH, "SOCCER_DATA/deepsort_dataset_train")
+
+# Local paths
+LOCAL_DATASET_PATH = "/content/soccer_dataset"
+LOCAL_RESULTS_DIR = "/content/tracking_results"
+
+# Dataset subdirectories
+SEQUENCES_DIR = "sequences"
+DETECTIONS_DIR = "detections"
+TRACKING_RESULTS_DIR = "tracking_results"
+
+# Model paths
+MODELS_DIR = PROJECT_ROOT / "models"
+YOLO_MODEL_PATH = MODELS_DIR / "yolov8n.pt"
+
+# Output paths
+OUTPUT_DIR = PROJECT_ROOT / "output"
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+# Sample data
+SAMPLE_VIDEO_URL = "https://github.com/mikel-brostrom/yolov8_tracking/raw/main/data/videos/people.mp4"
+````
+
+````python
+"""Data loading utilities for MOT format datasets."""
+
+import os
+import collections
+from pathlib import Path
+import numpy as np
+import cv2
+from typing import Dict, List, Tuple, Optional
+
+
+class MOTDataLoader:
+    """Loader for Multi-Object Tracking (MOT) format datasets."""
+    
+    def __init__(self, dataset_path: str):
+        """
+        Initialize the MOT data loader.
+        
+        Args:
+            dataset_path: Path to the dataset root directory
+        """
+        self.dataset_path = Path(dataset_path)
+        self.sequences_dir = self.dataset_path / "sequences"
+        self.detections_dir = self.dataset_path / "detections"
+        
+        if not self.dataset_path.exists():
+            raise ValueError(f"Dataset path does not exist: {dataset_path}")
+    
+    def load_detections(self, detection_file: str) -> Dict[int, List[List[float]]]:
+        """
+        Load detections from a MOT format file.
+        
+        Args:
+            detection_file: Path to the detection file
+            
+        Returns:
+            Dictionary mapping frame numbers to lists of detections
+        """
+        detections_by_frame = collections.defaultdict(list)
+        
+        with open(detection_file, 'r') as f:
+            for line in f:
+                parts = line.strip().split(',')
+                
+                frame_num = int(parts[0])
+                track_id = int(parts[1]) if len(parts) > 1 else -1
+                bb_left = float(parts[2])
+                bb_top = float(parts[3])
+                bb_width = float(parts[4])
+                bb_height = float(parts[5])
+                
+                # Convert to [x1, y1, x2, y2, confidence, class_id] format
+                bb_right = bb_left + bb_width
+                bb_bottom = bb_top + bb_height
+                confidence = float(parts[6]) if len(parts) > 6 else 0.99
+                class_id = int(parts[7]) if len(parts) > 7 else 0
+                
+                detection = [bb_left, bb_top, bb_right, bb_bottom, confidence, class_id]
+                detections_by_frame[frame_num].append(detection)
+        
+        return detections_by_frame
+    
+    def get_sequence_list(self) -> List[str]:
+        """Get list of available sequences."""
+        if not self.sequences_dir.exists():
+            return []
+        
+        return sorted([
+            d.name for d in self.sequences_dir.iterdir() 
+            if d.is_dir()
+        ])
+    
+    def load_sequence_frames(self, sequence_name: str) -> List[Tuple[int, np.ndarray]]:
+        """
+        Load all frames from a sequence.
+        
+        Args:
+            sequence_name: Name of the sequence
+            
+        Returns:
+            List of (frame_number, image) tuples
+        """
+        seq_path = self.sequences_dir / sequence_name
+        if not seq_path.exists():
+            raise ValueError(f"Sequence not found: {sequence_name}")
+        
+        frames = []
+        frame_files = sorted([
+            f for f in seq_path.iterdir() 
+            if f.suffix in ['.jpg', '.png']
+        ])
+        
+        for frame_file in frame_files:
+            frame_num = int(frame_file.stem)
+            img = cv2.imread(str(frame_file))
+            if img is not None:
+                frames.append((frame_num, img))
+        
+        return frames
+    
+    def get_sequence_info(self, sequence_name: str) -> Dict[str, any]:
+        """Get sequence information from seqinfo.ini file."""
+        seq_path = self.sequences_dir / sequence_name
+        ini_path = seq_path / "seqinfo.ini"
+        
+        info = {
+            'name': sequence_name,
+            'length': 0,
+            'width': 0,
+            'height': 0,
+            'fps': 30
+        }
+        
+        if ini_path.exists():
+            import configparser
+            config = configparser.ConfigParser()
+            config.read(ini_path)
+            
+            if 'Sequence' in config:
+                seq_config = config['Sequence']
+                info['length'] = int(seq_config.get('seqLength', 0))
+                info['width'] = int(seq_config.get('imWidth', 0))
+                info['height'] = int(seq_config.get('imHeight', 0))
+                info['fps'] = int(seq_config.get('frameRate', 30))
+        
+        return info
+````
+
+````python
+"""BotSort tracker implementation."""
+
+import numpy as np
+import torch
+from pathlib import Path
+from boxmot import BotSort
+from typing import List, Tuple, Optional, Dict
+import cv2
+
+from .base_tracker import BaseTracker
+
+
+class BotSortTracker(BaseTracker):
+    """BotSort tracking algorithm wrapper."""
+    
+    def __init__(self, 
+                 reid_weights: Optional[str] = None,
+                 device: str = 'cpu',
+                 with_reid: bool = False):
+        """
+        Initialize BotSort tracker.
+        
+        Args:
+            reid_weights: Path to ReID model weights
+            device: Device to run on ('cpu' or 'cuda')
+            with_reid: Whether to use ReID features
+        """
+        super().__init__()
+        
+        # Use dummy weights if none provided
+        if reid_weights is None:
+            reid_weights = Path("dummy_weights.pt")
+        
+        self.tracker = BotSort(
+            reid_weights=Path(reid_weights),
+            device=torch.device(device),
+            half=False,
+            with_reid=with_reid
+        )
+    
+    def update(self, 
+               detections: np.ndarray, 
+               frame: np.ndarray) -> np.ndarray:
+        """
+        Update tracker with new detections.
+        
+        Args:
+            detections: Array of detections [x1, y1, x2, y2, conf, cls]
+            frame: Current frame
+            
+        Returns:
+            Array of tracks [x1, y1, x2, y2, track_id, conf, cls, ...]
+        """
+        return self.tracker.update(detections, frame)
+    
+    def reset(self):
+        """Reset the tracker state."""
+        # Reinitialize the tracker
+        device = self.tracker.device
+        reid_weights = self.tracker.reid_weights
+        with_reid = self.tracker.with_reid
+        
+        self.tracker = BotSort(
+            reid_weights=reid_weights,
+            device=device,
+            half=False,
+            with_reid=with_reid
+        )
+    
+    def track_video(self, 
+                    video_path: str, 
+                    output_path: Optional[str] = None,
+                    detections_dict: Optional[Dict[int, List]] = None) -> List[Dict]:
+        """
+        Track objects in a video.
+        
+        Args:
+            video_path: Path to input video
+            output_path: Path to save output video (optional)
+            detections_dict: Pre-computed detections by frame (optional)
+            
+        Returns:
+            List of tracking results per frame
+        """
+        cap = cv2.VideoCapture(video_path)
+        
+        if not cap.isOpened():
+            raise ValueError(f"Error opening video file: {video_path}")
+        
+        # Get video properties
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        # Initialize video writer if output path is provided
+        out = None
+        if output_path:
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        
+        results = []
+        frame_idx = 0
+        
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            # Get detections for current frame
+            if detections_dict and frame_idx in detections_dict:
+                detections = np.array(detections_dict[frame_idx])
+            else:
+                # If no detections provided, skip frame
+                detections = np.array([])
+            
+            # Update tracker
+            if len(detections) > 0:
+                tracks = self.update(detections, frame)
+            else:
+                tracks = np.array([])
+            
+            # Store results
+            frame_results = {
+                'frame_idx': frame_idx,
+                'tracks': tracks
+            }
+            results.append(frame_results)
+            
+            # Draw tracks on frame if output is requested
+            if output_path and len(tracks) > 0:
+                frame = self.draw_tracks(frame, tracks)
+            
+            if out:
+                out.write(frame)
+            
+            frame_idx += 1
+        
+        # Clean up
+        cap.release()
+        if out:
+            out.release()
+        
+        return results
+    
+    def draw_tracks(self, frame: np.ndarray, tracks: np.ndarray) -> np.ndarray:
+        """Draw tracking results on frame."""
+        for track in tracks:
+            if len(track) >= 8:
+                x1, y1, x2, y2, track_id, conf, cls, _ = track
+            else:
+                x1, y1, x2, y2, track_id, conf, cls = track[:7]
+            
+            x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
+            track_id = int(track_id)
+            
+            # Draw bounding box
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            
+            # Draw track ID
+            label = f"ID: {track_id}"
+            cv2.putText(frame, label, (x1, y1 - 10), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        
+        return frame
+````
+
+````python
+"""MOT evaluation metrics implementation."""
+
+import os
+import numpy as np
+import trackeval
+import logging
+from typing import Dict, List, Tuple, Optional
+from pathlib import Path
+
+
+class MOTEvaluator:
+    """Evaluator for Multi-Object Tracking results."""
+    
+    def __init__(self, 
+                 metrics: List[str] = ['HOTA', 'CLEAR', 'Identity'],
+                 threshold: float = 0.5):
+        """
+        Initialize MOT evaluator.
+        
+        Args:
+            metrics: List of metrics to compute
+            threshold: IoU threshold for matching
+        """
+        self.metrics = metrics
+        self.threshold = threshold
+        
+        # Set logging level
+        logging.getLogger().setLevel(logging.WARNING)
+    
+    def evaluate(self,
+                 gt_dir: str,
+                 results_dir: str,
+                 sequences: Optional[List[str]] = None) -> Dict:
+        """
+        Evaluate tracking results against ground truth.
+        
+        Args:
+            gt_dir: Directory containing ground truth files
+            results_dir: Directory containing tracking results
+            sequences: List of sequences to evaluate (None = all)
+            
+        Returns:
+            Dictionary of evaluation metrics
+        """
+        gt_dir = Path(gt_dir)
+        results_dir = Path(results_dir)
+        
+        # Get list of sequences to evaluate
+        if sequences is None:
+            sequences = self._get_sequences(results_dir)
+        
+        # Load data
+        gt_data, tracker_data = self._load_data(gt_dir, results_dir, sequences)
+        
+        # Configure evaluation
+        eval_config = {
+            'USE_PARALLEL': False,
+            'PRINT_ONLY_COMBINED': True
+        }
+        
+        metrics_config = {
+            'METRICS': self.metrics,
+            'THRESHOLD': self.threshold
+        }
+        
+        # Create dataset and evaluator
+        dataset = InMemoryDataset(
+            name='MOTDataset',
+            tracker_name='Tracker',
+            seq_list=sequences,
+            gt_data=gt_data,
+            tracker_data=tracker_data
+        )
+        
+        evaluator = trackeval.Evaluator(eval_config)
+        metrics_list = [
+            getattr(trackeval.metrics, metric)(metrics_config) 
+            for metric in self.metrics
+        ]
+        
+        # Run evaluation
+        results, _ = evaluator.evaluate([dataset], metrics_list)
+        
+        # Extract and format results
+        return self._format_results(results, dataset.name, dataset.tracker_list[0])
+    
+    def _get_sequences(self, results_dir: Path) -> List[str]:
+        """Get list of sequences from results directory."""
+        return sorted([
+            f.stem for f in results_dir.iterdir() 
+            if f.suffix == '.txt'
+        ])
+    
+    def _load_data(self, 
+                   gt_dir: Path, 
+                   results_dir: Path, 
+                   sequences: List[str]) -> Tuple[Dict, Dict]:
+        """Load ground truth and tracking data."""
+        gt_data = {}
+        tracker_data = {}
+        
+        for seq in sequences:
+            gt_file = gt_dir / f"{seq}.txt"
+            results_file = results_dir / f"{seq}.txt"
+            
+            if gt_file.exists():
+                gt_data[seq] = np.loadtxt(gt_file, delimiter=',')
+            else:
+                print(f"Warning: GT file not found for {seq}")
+                gt_data[seq] = np.array([])
+            
+            if results_file.exists():
+                tracker_data[seq] = np.loadtxt(results_file, delimiter=',')
+            else:
+                print(f"Warning: Results file not found for {seq}")
+                tracker_data[seq] = np.array([])
+        
+        return gt_data, tracker_data
+    
+    def _format_results(self, 
+                       results: Dict, 
+                       dataset_name: str, 
+                       tracker_name: str) -> Dict:
+        """Format evaluation results."""
+        formatted = {}
+        
+        dataset_results = results[dataset_name]
+        tracker_results = dataset_results[tracker_name]['COMBINED_SEQ']['pedestrian']
+        
+        # Extract key metrics
+        if 'HOTA' in tracker_results:
+            formatted['HOTA'] = tracker_results['HOTA']['HOTA'] * 100
+            formatted['DetA'] = tracker_results['HOTA']['DetA'] * 100
+            formatted['AssA'] = tracker_results['HOTA']['AssA'] * 100
+        
+        if 'CLEAR' in tracker_results:
+            formatted['MOTA'] = tracker_results['CLEAR']['MOTA'] * 100
+            formatted['MOTP'] = tracker_results['CLEAR']['MOTP'] * 100
+        
+        if 'Identity' in tracker_results:
+            formatted['IDF1'] = tracker_results['Identity']['IDF1'] * 100
+        
+        return formatted
+    
+    def print_results(self, metrics: Dict):
+        """Print evaluation results in a formatted table."""
+        print("\n" + "="*50)
+        print("TRACKING EVALUATION RESULTS")
+        print("="*50)
+        
+        for metric, value in metrics.items():
+            print(f"{metric:<15}: {value:>6.2f}%")
+        
+        print("="*50)
+
+
+class InMemoryDataset:
+    """In-memory dataset for TrackEval."""
+    
+    def __init__(self, name, tracker_name, seq_list, gt_data, tracker_data):
+        self.name = name
+        self.tracker_list = [tracker_name]
+        self.seq_list = seq_list
+        self.class_list = ['pedestrian']
+        self.do_preproc = True
+        self.gt_data = gt_data
+        self.tracker_data = tracker_data
+    
+    def get_name(self):
+        return self.name
+    
+    def get_eval_info(self):
+        return self.tracker_list, self.seq_list, self.class_list
+    
+    def get_raw_seq_data(self, tracker, seq):
+        return self.gt_data.get(seq, np.array([])), self.tracker_data.get(seq, np.array([]))
+    
+    def get_preprocessed_seq_data(self, raw_data, cls):
+        """Preprocess data for evaluation."""
+        gt_data_raw, track_data_raw = raw_data
+        
+        # Get number of timesteps
+        num_timesteps = 0
+        if gt_data_raw.shape[0] > 0:
+            num_timesteps = int(gt_data_raw[:, 0].max())
+        if track_data_raw.shape[0] > 0:
+            num_timesteps = max(num_timesteps, int(track_data_raw[:, 0].max()))
+        
+        # Initialize data structure
+        data_keys = ['gt_ids', 'tracker_ids', 'gt_dets', 'tracker_dets', 'similarity_scores']
+        data = {key: [None] * num_timesteps for key in data_keys}
+        
+        # Get similarity metric from HOTA
+        hota_metric = trackeval.metrics.HOTA()
+        similarity_func = hota_metric._calculate_similarities
+        
+        # Process each timestep
+        for t in range(num_timesteps):
+            time_key = t + 1
+            
+            # Get GT data for this frame
+            gt_in_frame = gt_data_raw[gt_data_raw[:, 0] == time_key]
+            data['gt_ids'][t] = gt_in_frame[:, 1].astype(int) if gt_in_frame.shape[0] > 0 else np.array([])
+            data['gt_dets'][t] = gt_in_frame[:, 2:6] if gt_in_frame.shape[0] > 0 else np.array([])
+            
+            # Get tracker data for this frame
+            tracker_in_frame = track_data_raw[track_data_raw[:, 0] == time_key]
+            data['tracker_ids'][t] = tracker_in_frame[:, 1].astype(int) if tracker_in_frame.shape[0] > 0 else np.array([])
+            data['tracker_dets'][t] = tracker_in_frame[:, 2:6] if tracker_in_frame.shape[0] > 0 else np.array([])
+            
+            # Calculate similarities
+            if data['gt_dets'][t].shape[0] > 0 and data['tracker_dets'][t].shape[0] > 0:
+                data['similarity_scores'][t] = self._calculate_box_ious(
+                    data['gt_dets'][t], 
+                    data['tracker_dets'][t]
+                )
+            else:
+                data['similarity_scores'][t] = np.array([])
+        
+        return data
+    
+    def _calculate_box_ious(self, bboxes1, bboxes2):
+        """Calculate IoU between two sets of boxes."""
+        # This is a simplified IoU calculation
+        # You might want to use a more optimized version
+        ious = np.zeros((len(bboxes1), len(bboxes2)))
+        
+        for i, box1 in enumerate(bboxes1):
+            for j, box2 in enumerate(bboxes2):
+                # Calculate intersection
+                x1 = max(box1[0], box2[0])
+                y1 = max(box1[1], box2[1])
+                x2 = min(box1[0] + box1[2], box2[0] + box2[2])
+                y2 = min(box1[1] + box1[3], box2[1] + box2[3])
+                
+                if x2 > x1 and y2 > y1:
+                    intersection = (x2 - x1) * (y2 - y1)
+                else:
+                    intersection = 0
+                
+                # Calculate union
+                area1 = box1[2] * box1[3]
+                area2 = box2[2] * box2[3]
+                union = area1 + area2 - intersection
+                
+                # Calculate IoU
+                if union > 0:
+                    ious[i, j] = intersection / union
+                else:
+                    ious[i, j] = 0
+        
+        return ious
+````
+
+````python
+#!/usr/bin/env python
+"""Script to run tracking on a dataset."""
+
+import argparse
+import os
+from pathlib import Path
+import time
+
+from src.data import MOTDataLoader
+from src.tracking import BotSortTracker
+import numpy as np
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Run tracking on MOT dataset')
+    parser.add_argument('--dataset', type=str, required=True,
+                       help='Path to dataset directory')
+    parser.add_argument('--output', type=str, required=True,
+                       help='Output directory for results')
+    parser.add_argument('--sequences', type=str, nargs='+', default=None,
+                       help='Specific sequences to process (default: all)')
+    parser.add_argument('--device', type=str, default='cpu',
+                       help='Device to use (cpu/cuda)')
+    
+    args = parser.parse_args()
+    
+    # Create output directory
+    output_dir = Path(args.output)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Initialize data loader
+    print(f"Loading dataset from: {args.dataset}")
+    data_loader = MOTDataLoader(args.dataset)
+    
+    # Get sequences to process
+    if args.sequences:
+        sequences = args.sequences
+    else:
+        sequences = data_loader.get_sequence_list()
+    
+    print(f"Found {len(sequences)} sequences to process")
+    
+    # Process each sequence
+    for i, seq_name in enumerate(sequences):
+        print(f"\n[{i+1}/{len(sequences)}] Processing sequence: {seq_name}")
+        start_time = time.time()
+        
+        # Load detections
+        detection_file = data_loader.detections_dir / f"{seq_name}.txt"
+        if not detection_file.exists():
+            print(f"Warning: Detection file not found for {seq_name}. Skipping.")
+            continue
+        
+        detections_by_frame = data_loader.load_detections(str(detection_file))
+        
+        # Initialize tracker
+        tracker = BotSortTracker(device=args.device)
+        
+        # Load and process frames
+        frames = data_loader.load_sequence_frames(seq_name)
+        all_results = []
+        
+        for frame_num, frame_img in frames:
+            # Get detections for current frame
+            current_detections = detections_by_frame.get(frame_num, [])
+            detections_np = np.array(current_detections) if current_detections else np.array([])
+            
+            # Update tracker
+            if len(detections_np) > 0:
+                tracks = tracker.update(detections_np, frame_img)
+                
+                # Save tracking results
+                for track in tracks:
+                    if len(track) >= 8:
+                        x1, y1, x2, y2, track_id, conf, cls, _ = track
+                    else:
+                        x1, y1, x2, y2, track_id, conf, cls = track[:7]
+                    
+                    # Convert back to MOT format
+                    bb_left = x1
+                    bb_top = y1
+                    bb_width = x2 - x1
+                    bb_height = y2 - y1
+                    
+                    result_line = f"{frame_num},{int(track_id)},{bb_left:.2f},{bb_top:.2f}," \
+                                 f"{bb_width:.2f},{bb_height:.2f},{conf:.2f},-1,-1,-1\n"
+                    all_results.append(result_line)
+        
+        # Save results
+        output_file = output_dir / f"{seq_name}.txt"
+        with open(output_file, 'w') as f:
+            f.writelines(all_results)
+        
+        end_time = time.time()
+        print(f"Completed in {end_time - start_time:.2f} seconds")
+        print(f"Results saved to: {output_file}")
+    
+    print(f"\nAll sequences processed. Results saved in: {output_dir}")
+
+
+if __name__ == '__main__':
+    main()
+````
+
+````python
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Environment Setup for Soccer Tracking Pipeline\n",
+    "\n",
+    "This notebook helps you set up the environment for running the soccer tracking pipeline."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 1. Install Dependencies"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Install PyTorch with CUDA support\n",
+    "!pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu121"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Install computer vision libraries\n",
+    "!pip install numpy scipy opencv-python"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Install tracking libraries\n",
+    "!pip install ultralytics boxmot"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Install evaluation library\n",
+    "!pip install -q git+https://github.com/JonathonLuiten/TrackEval.git"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 2. Mount Google Drive (if using Colab)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Only run this if you're in Google Colab\n",
+    "try:\n",
+    "    from google.colab import drive\n",
+    "    drive.mount('/content/drive')\n",
+    "    print(\"Google Drive mounted successfully!\")\n",
+    "except ImportError:\n",
+    "    print(\"Not running in Google Colab. Skipping drive mount.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 3. Clone the Repository"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Clone the soccer tracking repository\n",
+    "!git clone https://github.com/yourusername/soccer-tracking-pipeline.git\n",
+    "%cd soccer-tracking-pipeline"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 4. Verify Installation"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Verify all imports work correctly\n",
+    "import torch\n",
+    "import cv2\n",
+    "import numpy as np\n",
+    "from ultralytics import YOLO\n",
+    "from boxmot import BotSort\n",
+    "import trackeval\n",
+    "\n",
+    "print(\"PyTorch version:\", torch.__version__)\n",
+    "print(\"CUDA available:\", torch.cuda.is_available())\n",
+    "print(\"OpenCV version:\", cv2.__version__)\n",
+    "print(\"\\nAll imports successful!\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 5. Download Sample Data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Download a sample video for testing\n",
+    "!wget -q https://github.com/mikel-brostrom/yolov8_tracking/raw/main/data/videos/people.mp4 -O data/sample_videos/people.mp4\n",
+    "print(\"Sample video downloaded successfully!\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## 6. Set Up SSH for Remote Development (Optional)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Install and configure SSH for VS Code remote development\n",
+    "!pip install colab-ssh -q\n",
+    "\n",
+    "from colab_ssh import launch_ssh_cloudflared\n",
+    "launch_ssh_cloudflared(password=\"your_password_here\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Next Steps\n",
+    "\n",
+    "Now that your environment is set up, you can:\n",
+    "1. Run the simple tracking demo: `02_simple_tracking_demo.ipynb`\n",
+    "2. Process soccer datasets: `03_soccer_tracking_pipeline.ipynb`\n",
+    "3. Evaluate results: `04_evaluation_analysis.ipynb`"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
+````
+
+This architecture provides:
+
+1. **Clean separation of concerns**: Each module has a specific purpose
+2. **Reusable components**: The tracking, data loading, and evaluation modules can be used independently
+3. **Easy testing**: Modular structure makes unit testing straightforward
+4. **Flexible configuration**: Central configuration management
+5. **Multiple interfaces**: Both notebook and script interfaces for different use cases
+6. **Professional structure**: Following Python best practices
+
+The key improvements:
+- Extracted all the tracking logic into reusable classes
+- Created proper data loaders for MOT format datasets
+- Separated evaluation logic into its own module
+- Split the monolithic notebook into focused, purpose-specific notebooks
+- Added command-line scripts for automation
+- Proper error handling and logging
+- Documentation and type hints
+
+Would you like me to create any additional components or modify the structure?
+
+Similar code found with 4 license types
