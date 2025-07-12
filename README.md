@@ -1,4 +1,4 @@
-# Soccer Tracking Pipeline
+# YOLO2
 
 A comprehensive computer vision pipeline for tracking soccer players using YOLOv8 and various tracking algorithms (BotSort, DeepSort). Designed for Google Colab with remote VM access via VS Code's Remote-SSH.
 
@@ -18,11 +18,11 @@ A comprehensive computer vision pipeline for tracking soccer players using YOLOv
 
 ```python
 # 1. Clone the repository
-!git clone https://github.com/yourusername/soccer-tracking-pipeline.git
-%cd soccer-tracking-pipeline
+git clone https://github.com/victornaguiar/yolo2.git
+cd yolo2
 
 # 2. Run the setup script
-!bash scripts/setup_colab.sh
+bash scripts/setup_colab.sh
 
 # 3. Mount Google Drive for data access
 from google.colab import drive
@@ -32,8 +32,8 @@ drive.mount('/content/drive')
 ### Local Installation
 
 ```bash
-git clone https://github.com/yourusername/soccer-tracking-pipeline.git
-cd soccer-tracking-pipeline
+git clone https://github.com/victornaguiar/yolo2.git
+cd yolo2
 pip install -r requirements.txt
 ```
 
@@ -104,7 +104,7 @@ metrics = evaluator.evaluate(
 ## Project Structure
 
 ```
-soccer-tracking-pipeline/
+yolo2/
 ├── README.md
 ├── requirements.txt
 ├── setup.py
@@ -329,11 +329,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you use this code in your research, please cite:
 
 ```bibtex
-@software{soccer_tracking_pipeline,
-  author = {Your Name},
-  title = {Soccer Tracking Pipeline},
+@software{yolo2,
+  author = {Victor Naguiar},
+  title = {YOLO2},
   year = {2024},
-  url = {https://github.com/yourusername/soccer-tracking-pipeline}
+  url = {https://github.com/victornaguiar/yolo2}
 }
 ```
 
@@ -347,6 +347,6 @@ If you use this code in your research, please cite:
 ## Support
 
 For questions and support:
-- 📧 Email: your.email@example.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/soccer-tracking-pipeline/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/soccer-tracking-pipeline/discussions)
+- 📧 Email: victornaguiar@example.com
+- 🐛 Issues: [GitHub Issues](https://github.com/victornaguiar/yolo2/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/victornaguiar/yolo2/discussions)
